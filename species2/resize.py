@@ -22,5 +22,5 @@ def resize(src_dir, tgt_dir, tgt_size):
         cv2.imwrite(tgt_fn, res)
 
 
-resize(DATA_DL_DIR + '/train', TRAIN_DIR, (640, 640))
-resize(DATA_DL_DIR + '/test', TEST_DIR, (640, 640))
+resize(DATA_DIR + '/train', TRAIN_DIR, (640, 640))
+resize(DATA_DIR + '/test', TEST_DIR, (640, 640))

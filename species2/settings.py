@@ -1,5 +1,3 @@
-DATA_DL_DIR = '/home/caitsithx/deeplearning_workspace/dl_data/invasive-species' \
-              '-monitoring'
 DATA_DIR = '/home/caitsithx/deeplearning_workspace/data/invasive-species' \
            '-monitoring '
 TRAIN_DIR = DATA_DIR + '/train-640'

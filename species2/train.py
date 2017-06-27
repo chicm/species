@@ -65,7 +65,10 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
                     optimizer.step()
                 running_loss += loss.data[0]
                 running_corrects += torch.sum(preds.int() == labels.data.int())
-            epoch_loss = running_loss / data_loaders[phase].num
+            print "running_loss %d" % running_loss
+	    print "running_corrects %d" % running_corrects
+	    print "data_num %d" % data_loaders[phase].num
+	    epoch_loss = running_loss / data_loaders[phase].num
             epoch_acc = running_corrects / data_loaders[phase].num
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(

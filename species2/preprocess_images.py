@@ -44,7 +44,7 @@ def resize_640(src_dir, tgt_dir, match_str):
             #print('')
             #print('skipping {}'.format(f))
         fn = src_dir+'/'+f
-        print('.', end='',flush=True)
+        # print('.', end='',flush=True)
         tgt_fn = tgt_dir+'/'+f
 
         if os.path.exists(tgt_fn):

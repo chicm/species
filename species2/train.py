@@ -44,9 +44,11 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num=2,
                     labels.cuda())
                 optimizer.zero_grad()
                 outputs = model(inputs)
-                # preds = torch.sigmoid(outputs.data)
+                #preds = torch.sigmoid(outputs.data)
+                #print("preds size:{}".format(preds.size()))
+                #print("label size:{}".format(labels.data.size()))
                 preds = torch.ge(outputs.data, 0.5).view(labels.data.size())
-                # _, preds = torch.max(outputs.data, 1)
+                #_, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()

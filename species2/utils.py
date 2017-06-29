@@ -19,6 +19,7 @@ import random
 from PIL import Image
 from inception import inception_v3
 from vgg import vgg19_bn, vgg16_bn
+from inceptionresv2 import inceptionresnetv2
 
 MODEL_DIR = settings.MODEL_DIR
 
@@ -202,6 +203,15 @@ def create_inceptionv3(load_weights=False):
     incept_ft.batch_size = 32
     return incept_ft
 
+def create_inceptionresv2(load_weights=False):
+    model_ft = inceptionresnetv2(pretrained=True)
+    num_ftrs = model_ft.classif.in_features
+    model_ft.classif = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
+    model_ft = model_ft.cuda()
+
+    model_ft.name = 'inceptionresv2'
+    model_ft.batch_size = 4
+    return model_ft
 
 def create_model(model_name):
     create_func = 'create_' + model_name

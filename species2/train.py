@@ -33,8 +33,8 @@ batch_size = 8
 epochs = 100
 
 def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=100):
-    data_loaders = { 'train': get_train_loader(model), 'valid': get_val_loader(model)} 
-    
+    data_loaders = { 'train': get_train_loader(model), 'valid': get_val_loader(model)}
+
     since = time.time()
     best_model = model
     best_acc = 0.0
@@ -46,7 +46,7 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
         for phase in ['train', 'valid']:
             if phase == 'train':
                 optimizer = lr_scheduler(optimizer, epoch, init_lr=init_lr)
-                model.train(True) 
+                model.train(True)
             else:
                 model.train(False)
             running_loss = 0.0
@@ -57,7 +57,7 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 #preds = torch.sigmoid(outputs.data)
-                preds = torch.ge(outputs.data, 0.5)
+                preds = torch.ge(outputs.data, 0.5).view(labels.data.size())
                 #_, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
                 if phase == 'train':
@@ -95,7 +95,7 @@ def lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
     for param_group in optimizer.param_groups:
         print('existing lr = {}'.format(param_group['lr']))
         param_group['lr'] = lr
-    return optimizer  
+    return optimizer
 
 def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
     lr = 0
@@ -109,7 +109,7 @@ def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
         print('LR is set to {}'.format(lr))
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
-    return optimizer    
+    return optimizer
 
 def train(model, init_lr = 0.001, num_epochs = epochs):
     criterion = nn.BCELoss()
@@ -117,7 +117,7 @@ def train(model, init_lr = 0.001, num_epochs = epochs):
     optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
     #optimizer_ft = optim.Adam(model.parameters(), lr=init_lr)
 
-    model = train_model(model, criterion, optimizer_ft, cyc_lr_scheduler, init_lr=init_lr, 
+    model = train_model(model, criterion, optimizer_ft, cyc_lr_scheduler, init_lr=init_lr,
                         num_epochs=num_epochs, max_num = model.max_num)
     return model
 

@@ -149,7 +149,7 @@ def get_train_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset, batch_size=16, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset, batch_size=24, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 

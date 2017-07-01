@@ -140,7 +140,7 @@ def get_train_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset, batch_size=16, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset, batch_size=24, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
@@ -153,7 +153,7 @@ def get_val_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', train_data=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=8, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset,  batch_size=16, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
@@ -166,7 +166,7 @@ def get_test_loader(model, batch_size = 16, shuffle = False):
         batch_size = model.batch_size
 
     dset = PlanetDataset(DATA_DIR+'/sample_submission.csv', has_label=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=8, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset,  batch_size=16, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 

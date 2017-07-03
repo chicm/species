@@ -83,23 +83,23 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        # transforms.Scale(320),
+        transforms.Scale(320), 
         transforms.RandomSizedCrop(224),
         # transforms.Scale(224),
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        # transforms.Scale(299),
+        transforms.Scale(480), 
         transforms.RandomSizedCrop(299),
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
         transforms.Scale(224),
@@ -111,8 +111,8 @@ data_transforms = {
         transforms.Scale(299),
         # transforms.CenterCrop(299),
         transforms.ToTensor(),
-        #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
         transforms.Scale(224),
@@ -149,7 +149,7 @@ def get_train_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset, batch_size=4, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
@@ -162,7 +162,7 @@ def get_val_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', train_data=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=4, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
@@ -175,7 +175,7 @@ def get_test_loader(model, batch_size = 16, shuffle = False):
         batch_size = model.batch_size
 
     dset = PlanetDataset(DATA_DIR+'/sample_submission.csv', has_label=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=4, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 

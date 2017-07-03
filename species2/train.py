@@ -29,8 +29,8 @@ data_dir = settings.DATA_DIR
 
 RESULT_DIR = data_dir + '/results'
 MODEL_DIR = settings.MODEL_DIR
-batch_size = 8
-epochs = 100
+batch_size = 16
+epochs = 50
 
 def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=100):
     data_loaders = { 'train': get_train_loader(model), 'valid': get_val_loader(model)} 
@@ -58,6 +58,8 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
                 outputs = model(inputs)
                 #preds = torch.sigmoid(outputs.data)
                 preds = torch.ge(outputs.data, 0.5)
+                #print("preds size:{}".format(preds.size()))
+                #print("label size:{}".format(labels.data.size()))
                 #_, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
                 if phase == 'train':

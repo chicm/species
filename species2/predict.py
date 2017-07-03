@@ -81,6 +81,11 @@ def submit(filename):
     print(df.head())
     df.to_csv(subm_name, index=False)
 
+    preds2 = (preds > 0.5).astype(np.int)
+    df2 = pd.read_csv(data_dir + '/sample_submission.csv') 
+    df2['invasive'] = preds2
+    df2.to_csv(subm_name + '01', index=False)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--ens", action='store_true', help="ensemble predict")
 parser.add_argument("--sub", nargs=1, help="generate submission file")

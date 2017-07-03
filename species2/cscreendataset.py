@@ -3,11 +3,12 @@ import random
 
 import numpy as np
 import pandas as pd
-import settings
 import torch
 import torch.utils.data as data
 from PIL import Image
 from torchvision import transforms
+
+import settings
 
 # import transforms
 
@@ -90,7 +91,7 @@ data_transforms = {
         transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
         transforms.Scale(480),
@@ -99,7 +100,7 @@ data_transforms = {
         transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
         transforms.Scale(224),
@@ -112,7 +113,7 @@ data_transforms = {
         # transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
         transforms.Scale(224),
@@ -140,33 +141,41 @@ dset_classes = dsets['train'].classes
 save_array(CLASSES_FILE, dset_classes)
 '''
 
-def get_train_loader(model, batch_size = 16, shuffle = True):
+
+def get_train_loader(model, batch_size=16, shuffle=True):
+    print("train batch_size %d " % batch_size)
     if model.name.startswith('inception'):
         transkey = 'trainv3'
     else:
         transkey = 'train'
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
-    #train_v2.csv
-    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=shuffle, num_workers=4)
+    # train_v2.csv
+    dset = PlanetDataset(DATA_DIR + '/train_labels.csv',
+                         transform=data_transforms[transkey])
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
+                                          shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
-def get_val_loader(model, batch_size = 16, shuffle = True):
+
+def get_val_loader(model, batch_size=16, shuffle=True):
     if model.name.startswith('inception'):
         transkey = 'validv3'
     else:
         transkey = 'valid'
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
-    #train_v2.csv
-    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', train_data=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
+    # train_v2.csv
+    dset = PlanetDataset(DATA_DIR + '/train_labels.csv', train_data=False,
+                         transform=data_transforms[transkey])
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
+                                          shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 
-def get_test_loader(model, batch_size = 16, shuffle = False):
+
+def get_test_loader(model, batch_size=16, shuffle=False):
     if model.name.startswith('inception'):
         transkey = 'testv3'
     else:
@@ -174,8 +183,10 @@ def get_test_loader(model, batch_size = 16, shuffle = False):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
 
-    dset = PlanetDataset(DATA_DIR+'/sample_submission.csv', has_label=False, transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
+    dset = PlanetDataset(DATA_DIR + '/sample_submission.csv', has_label=False,
+                         transform=data_transforms[transkey])
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
+                                          shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 

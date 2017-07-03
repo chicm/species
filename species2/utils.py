@@ -90,7 +90,7 @@ def create_res50(load_weights=False):
     model_ft = model_ft.cuda()
 
     model_ft.name = 'res50'
-    model_ft.batch_size = 32
+    model_ft.batch_size = 24
     return model_ft
 
 def create_res101(load_weights=False):
@@ -100,7 +100,7 @@ def create_res101(load_weights=False):
     model_ft = model_ft.cuda()
 
     model_ft.name = 'res101'
-    model_ft.batch_size = 32
+    model_ft.batch_size = 24
     return model_ft
 
 def create_res152(load_weights=False):
@@ -119,7 +119,7 @@ def create_dense161(load_weights=False):
     desnet_ft = desnet_ft.cuda()
 
     desnet_ft.name = 'dense161'
-    #desnet_ft.batch_size = 32
+    desnet_ft.batch_size = 16
     return desnet_ft
 
 def create_dense169(load_weights=False):
@@ -129,7 +129,7 @@ def create_dense169(load_weights=False):
     desnet_ft = desnet_ft.cuda()
 
     desnet_ft.name = 'dense169'
-    #desnet_ft.batch_size = 32
+    desnet_ft.batch_size = 16
     return desnet_ft
 
 def create_dense121(load_weights=False):
@@ -139,7 +139,7 @@ def create_dense121(load_weights=False):
     desnet_ft = desnet_ft.cuda()
 
     desnet_ft.name = 'dense121'
-    desnet_ft.batch_size = 32
+    desnet_ft.batch_size = 16
     return desnet_ft
 
 def create_dense201(load_weights=False):
@@ -147,9 +147,9 @@ def create_dense201(load_weights=False):
     num_ftrs = desnet_ft.classifier.in_features
     desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     desnet_ft = desnet_ft.cuda()
- 
+
     desnet_ft.name = 'dense201'
-    #desnet_ft.batch_size = 32
+    desnet_ft.batch_size = 16
     return desnet_ft
 
 def create_vgg19bn(load_weights=False):
@@ -169,7 +169,7 @@ def create_vgg19bn(load_weights=False):
 
     vgg19_bn_ft.name = 'vgg19bn'
     vgg19_bn_ft.max_num = 1
-    #vgg19_bn_ft.batch_size = 32
+    vgg19_bn_ft.batch_size = 24
     return vgg19_bn_ft
 
 def create_vgg16bn(load_weights=False):
@@ -189,7 +189,7 @@ def create_vgg16bn(load_weights=False):
 
     vgg16_bn_ft.name = 'vgg16bn'
     vgg16_bn_ft.max_num = 1
-    #vgg16_bn_ft.batch_size = 32
+    vgg16_bn_ft.batch_size = 24
     return vgg16_bn_ft
 
 def create_inceptionv3(load_weights=False):

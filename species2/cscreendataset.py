@@ -83,7 +83,7 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        transforms.Scale(320), 
+        transforms.Scale(320),
         transforms.RandomSizedCrop(224),
         # transforms.Scale(224),
         transforms.RandomHorizontalFlip(),
@@ -93,7 +93,7 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        transforms.Scale(480), 
+        transforms.Scale(480),
         transforms.RandomSizedCrop(299),
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
@@ -149,7 +149,7 @@ def get_train_loader(model, batch_size = 16, shuffle = True):
         batch_size = model.batch_size
     #train_v2.csv
     dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(dset, batch_size=24, shuffle=shuffle, num_workers=4)
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
 

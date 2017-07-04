@@ -169,7 +169,7 @@ def create_vgg19bn(load_weights=False):
 
     vgg19_bn_ft.name = 'vgg19bn'
     vgg19_bn_ft.max_num = 1
-    vgg19_bn_ft.batch_size = 24
+    vgg19_bn_ft.batch_size = 16
     return vgg19_bn_ft
 
 def create_vgg16bn(load_weights=False):
@@ -189,7 +189,7 @@ def create_vgg16bn(load_weights=False):
 
     vgg16_bn_ft.name = 'vgg16bn'
     vgg16_bn_ft.max_num = 1
-    vgg16_bn_ft.batch_size = 24
+    vgg16_bn_ft.batch_size = 16
     return vgg16_bn_ft
 
 def create_inceptionv3(load_weights=False):

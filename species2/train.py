@@ -1,7 +1,9 @@
 import argparse
 
+import tqdm
 import time
 import torch
+import report
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
@@ -13,7 +15,6 @@ from utils import save_weights, load_best_weights, w_files_training
 
 RESULT_DIR = DATA_DIR + '/results'
 
-batch_size = 8
 epochs = 100
 
 
@@ -26,6 +27,7 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num=2,
     best_model = model
     best_acc = 0.0
     print(model.name)
+    report.start(since, model.name)
     for epoch in range(num_epochs):
         epoch_since = time.time()
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -38,7 +40,7 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num=2,
                 model.train(False)
             running_loss = 0.0
             running_corrects = 0
-            for data in data_loaders[phase]:
+            for data in tqdm.tqdm(data_loaders[phase]):
                 inputs, labels, _ = data
                 inputs, labels = Variable(inputs.cuda()), Variable(
                     labels.cuda())
@@ -65,12 +67,18 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num=2,
                 phase, epoch_loss, epoch_acc))
 
             if phase == 'valid':
+                report.report_valid(epoch_loss, epoch_acc, running_corrects)
                 save_weights(epoch_acc, model, epoch, max_num=max_num)
+            else:
+                report.report_train(epoch_loss, epoch_acc, running_corrects)
             if phase == 'valid' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 # best_model = copy.deepcopy(model)
                 # torch.save(best_model.state_dict(), w_file)
-        print('epoch {}: {:.0f}s'.format(epoch, time.time() - epoch_since))
+        epoch_time = time.time() - epoch_since
+        print('epoch {}: {:.0f}s'.format(epoch, epoch_time))
+        report.report_time(epoch_time)
+
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
@@ -89,7 +97,13 @@ def lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
     for param_group in optimizer.param_groups:
         print('existing lr = {}'.format(param_group['lr']))
         param_group['lr'] = lr
+        report.report_lr(lr)
     return optimizer
+
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
 
 def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
@@ -107,37 +121,46 @@ def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
     return optimizer
 
 
-def train(model, init_lr=0.001, num_epochs=epochs):
+def train(model, finetune, init_lr=0.001, num_epochs=epochs):
     criterion = nn.BCELoss()
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
-    # optimizer_ft = optim.Adam(model.parameters(), lr=init_lr)
 
-    model = train_model(model, criterion, optimizer_ft, cyc_lr_scheduler,
+    if finetune:
+        optimizer_ft = optim.SGD(model.fc.parameters(), lr=init_lr, momentum=0.9)
+        init_lr = 0.0001
+    else:
+        optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
+
+    model = train_model(model, criterion, optimizer_ft, lr_scheduler,
                         init_lr=init_lr,
                         num_epochs=num_epochs, max_num=model.max_num)
     return model
 
 
-def train_net(model_name):
+def train_net(model_name, finetune):
     print('Training {}...'.format(model_name))
     model = create_model(model_name)
     try:
         load_best_weights(model)
     except:
-        print('Failed to load weigths')
+        print('Failed to load weights')
     if not hasattr(model, 'max_num'):
         model.max_num = 2
-    train(model)
+    train(model, finetune)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--train", nargs=1, help="train model")
+parser.add_argument("--finetune", nargs=1, help="train model")
 
 args = parser.parse_args()
 if args.train:
     print('start training model')
     mname = args.train[0]
     train_net(mname)
+if args.finetune:
+    print('start finetune model')
+    mname = args.finetune[0]
+    train_net(mname, True)
 
     print('done')

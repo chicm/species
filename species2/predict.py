@@ -16,7 +16,7 @@ from utils import save_array, load_array
 data_dir = settings.DATA_DIR
 MODEL_DIR = settings.MODEL_DIR
 
-RESULT_DIR = data_dir + '/results'
+RESULT_DIR = data_dir + '/result'
 PRED_FILE = RESULT_DIR + '/pred_ens.dat'
 PRED_FILE_RAW = RESULT_DIR + '/pred_ens_raw.dat'
 batch_size = 16

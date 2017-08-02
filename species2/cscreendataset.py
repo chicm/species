@@ -1,6 +1,7 @@
 import os
 import random
 
+import tqdm
 import numpy as np
 import pandas as pd
 import torch
@@ -9,12 +10,6 @@ from PIL import Image
 from torchvision import transforms
 
 import settings
-
-# import transforms
-
-DATA_DIR = settings.DATA_DIR
-TRAIN_DIR = DATA_DIR + '/train-640'
-TEST_DIR = DATA_DIR + '/test-640'
 
 
 def pil_load(img_path):
@@ -41,13 +36,13 @@ class PlanetDataset(data.Dataset):
 
             for index, line in enumerate(split_data):
                 f, invasive = line
-                file_names[index] = os.path.join(TRAIN_DIR, str(f) + '.jpg')
+                file_names[index] = os.path.join(settings.TRAIN_DIR, str(f) + '.jpg')
                 labels[index] = invasive
         else:
             file_names = [None] * df_train.values.shape[0]
             for index, line in enumerate(df_train.values):
                 f, invasive = line
-                file_names[index] = TEST_DIR + '/' + str(int(f)) + '.jpg'
+                file_names[index] = settings.TEST_DIR + '/' + str(int(f)) + '.jpg'
                 # print(filenames[:100])
         self.transform = transform
         self.num = len(file_names)
@@ -55,6 +50,13 @@ class PlanetDataset(data.Dataset):
         self.train_data = train_data
         self.has_label = has_label
 
+        self.images = []
+
+        print("pre-reading images from files.")
+        for file_name in tqdm.tqdm(file_names):
+            self.images.append(pil_load(file_name))
+
+        print("load %d images." % len(self.images))
         if has_label:
             self.labels = np.array(labels, dtype=np.float32)
             # print(self.labels.shape)
@@ -62,10 +64,10 @@ class PlanetDataset(data.Dataset):
             # print(self.num)
 
     def __getitem__(self, index):
-        img = pil_load(self.file_names[index])
+        # img = pil_load(self.file_names[index])
+        img = self.images[index]
         if self.transform is not None:
             img = self.transform(img)
-
         if self.has_label:
             label = self.labels[index]
             return img, label, self.file_names[index]
@@ -77,53 +79,65 @@ class PlanetDataset(data.Dataset):
 
 
 def randomRotate(img):
-    d = random.randint(0, 4) * 90
+    d = random.uniform(0, 360)
     img2 = img.rotate(d, resample=Image.NEAREST)
     return img2
 
 
+def randomMaxScreen(img):
+    if img.size[0] == img.size[1]:
+        return img
+    elif img.size[0] > img.size[1]:
+        x1 = random.randint(0, img.size[0] - img.size[1])
+        y1 = 0
+        return img.crop((x1, y1, x1 + img.size[1], y1 + img.size[1]))
+    elif img.size[0] < img.size[1]:
+        x1 = 0
+        y1 = random.randint(0, img.size[1] - img.size[0])
+        return img.crop((x1, y1, x1 + img.size[0], y1 + img.size[0]))
+
+
 data_transforms = {
     'train': transforms.Compose([
-        transforms.Scale(320),
-        transforms.RandomSizedCrop(224),
-        # transforms.Scale(224),
         transforms.RandomHorizontalFlip(),
+        transforms.Lambda(lambda x: randomMaxScreen(x)),
+        transforms.Scale(317),
         transforms.Lambda(lambda x: randomRotate(x)),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        transforms.Scale(480),
-        transforms.RandomSizedCrop(299),
-        transforms.RandomHorizontalFlip(),
+        transforms.Lambda(lambda x: randomMaxScreen(x)),
+        transforms.Scale(423),
         transforms.Lambda(lambda x: randomRotate(x)),
+        transforms.CenterCrop(299),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
-        transforms.Scale(224),
-        # transforms.CenterCrop(224),
+        transforms.Scale(226),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        transforms.Scale(299),
-        # transforms.CenterCrop(299),
+        transforms.Scale(301),
+        transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
-        transforms.Scale(224),
-        # transforms.CenterCrop(224),
+        transforms.Scale(226),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'testv3': transforms.Compose([
-        transforms.Scale(299),
-        # transforms.CenterCrop(299),
+        transforms.Scale(301),
+        transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
@@ -143,7 +157,6 @@ save_array(CLASSES_FILE, dset_classes)
 
 
 def get_train_loader(model, batch_size=16, shuffle=True):
-    print("train batch_size %d " % batch_size)
     if model.name.startswith('inception'):
         transkey = 'trainv3'
     else:
@@ -151,10 +164,11 @@ def get_train_loader(model, batch_size=16, shuffle=True):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
     # train_v2.csv
-    dset = PlanetDataset(DATA_DIR + '/train_labels.csv',
+    print("train batch_size %d " % batch_size)
+    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv',
                          transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
-                                          shuffle=shuffle, num_workers=4)
+                                          shuffle=shuffle)
     dloader.num = dset.num
     return dloader
 
@@ -167,10 +181,11 @@ def get_val_loader(model, batch_size=16, shuffle=True):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
     # train_v2.csv
-    dset = PlanetDataset(DATA_DIR + '/train_labels.csv', train_data=False,
+
+    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv', train_data=False,
                          transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
-                                          shuffle=shuffle, num_workers=4)
+                                          shuffle=shuffle)
     dloader.num = dset.num
     return dloader
 
@@ -183,10 +198,10 @@ def get_test_loader(model, batch_size=16, shuffle=False):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
 
-    dset = PlanetDataset(DATA_DIR + '/sample_submission.csv', has_label=False,
+    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False,
                          transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
-                                          shuffle=shuffle, num_workers=4)
+                                          shuffle=shuffle)
     dloader.num = dset.num
     return dloader
 

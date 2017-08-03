@@ -157,7 +157,7 @@ args = parser.parse_args()
 if args.train:
     print('start training model')
     mname = args.train[0]
-    train_net(mname)
+    train_net(mname, False)
 if args.finetune:
     print('start finetune model')
     mname = args.finetune[0]

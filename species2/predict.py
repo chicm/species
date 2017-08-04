@@ -9,7 +9,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 import settings
-from cscreendataset import get_test_loader
+from data_loader import get_test_loader
 from utils import create_model
 from utils import save_array, load_array
 

@@ -18,7 +18,57 @@ def pil_load(img_path):
             return img.convert('RGB')
 
 
-class PlanetDataset(data.Dataset):
+class ImageData:
+    def __init__(self, path, image_label):
+        self.path = path
+        self.label = image_label
+        self.image = None
+
+
+class PseudoLabelSet(data.Dataset):
+    def __getitem__(self, index):
+        image_data = self.data_set[index]
+        image = self.transform(image_data.image)
+        return image, image_data.label, image_data.path
+
+    def __len__(self):
+        len(self.data_set)
+
+    def __init__(self, train_csv_path, pseudo_csv_path,
+                 transform=None):
+        df_train = pd.read_csv(train_csv_path)
+        df_pseudo = pd.read_csv(pseudo_csv_path)
+
+        self.data_set = []
+
+        for index in range(2):
+            self.add_data(df_train.values[:int(df_train.values.shape[0] * 0.7)], settings.TRAIN_DIR)
+
+        print("add %d train data." % len(self.data_set))
+
+        self.add_data(df_pseudo.values, settings.TEST_DIR)
+
+        print("add %d pseudo labeling data." % len(df_pseudo.values))
+
+        np.random.permutation(self.data_set)
+
+        print("pre-reading images from files.")
+        for image_data in tqdm.tqdm(self.data_set):
+            image_data.image = pil_load(image_data.path)
+
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Lambda(lambda x: nothing(x))
+
+    def add_data(self, df_values, dir_path):
+        for line in df_values:
+            image_name, invasive = line
+            image_path = os.path.join(dir_path, str(int(image_name)) + '.jpg')
+            self.data_set.append(ImageData(image_path, invasive))
+
+
+class NormalSet(data.Dataset):
     def __init__(self, file_list_path, train_data=True, has_label=True,
                  transform=None, split=0.8):
         df_train = pd.read_csv(file_list_path)
@@ -38,6 +88,7 @@ class PlanetDataset(data.Dataset):
                 f, invasive = line
                 file_names[index] = os.path.join(settings.TRAIN_DIR, str(f) + '.jpg')
                 labels[index] = invasive
+            self.labels = np.array(labels, dtype=np.float32)
         else:
             file_names = [None] * df_train.values.shape[0]
             for index, line in enumerate(df_train.values):
@@ -57,11 +108,6 @@ class PlanetDataset(data.Dataset):
             self.images.append(pil_load(file_name))
 
         print("load %d images." % len(self.images))
-        if has_label:
-            self.labels = np.array(labels, dtype=np.float32)
-            # print(self.labels.shape)
-
-            # print(self.num)
 
     def __getitem__(self, index):
         # img = pil_load(self.file_names[index])
@@ -76,6 +122,10 @@ class PlanetDataset(data.Dataset):
 
     def __len__(self):
         return self.num
+
+
+def nothing(image):
+    return image
 
 
 def randomRotate(img):
@@ -165,8 +215,8 @@ def get_train_loader(model, batch_size=16, shuffle=True):
         batch_size = model.batch_size
     # train_v2.csv
     print("train batch_size %d " % batch_size)
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv',
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'train_labels.csv',
+                     transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
@@ -182,8 +232,8 @@ def get_val_loader(model, batch_size=16, shuffle=True):
         batch_size = model.batch_size
     # train_v2.csv
 
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv', train_data=False,
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'train_labels.csv', train_data=False,
+                     transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
@@ -198,8 +248,8 @@ def get_test_loader(model, batch_size=16, shuffle=False):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
 
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False,
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False,
+                     transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
@@ -207,27 +257,6 @@ def get_test_loader(model, batch_size=16, shuffle=False):
 
 
 if __name__ == '__main__':
-    loader = get_train_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, label, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
-    loader = get_val_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, label, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
-    loader = get_test_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
+    dset = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
+                          settings.DATA_DIR + os.sep + 'sub01.csv')
+    dloader = torch.utils.data.DataLoader(dset, batch_size=12, shuffle=True)

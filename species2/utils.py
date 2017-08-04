@@ -4,17 +4,21 @@ import os
 import bcolz
 import torch
 import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
 from torchvision import models
 
 import settings
-from inception import inception_v3
-from inceptionresv2 import inceptionresnetv2
-from vgg import vgg19_bn, vgg16_bn
 
 MODEL_DIR = settings.MODEL_DIR
 
 w_files_training = []
 
+model_urls = {
+    'vgg11_bn': 'https://download.pytorch.org/models/vgg11_bn-6002323d.pth',
+    'vgg13_bn': 'https://download.pytorch.org/models/vgg13_bn-abd245e5.pth',
+    'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth',
+    'vgg19_bn': 'https://download.pytorch.org/models/vgg19_bn-c79401a0.pth',
+}
 
 def get_acc_from_w_filename(filename):
     try:
@@ -82,162 +86,50 @@ def load_weights_file(model, w_file):
     model.load_state_dict(torch.load(w_file))
 
 
-def create_res50(load_weights=False):
-    model_ft = models.resnet50(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    model_ft = model_ft.cuda()
+def create_model(arch, fine_tune=False, pre_trained=True):
+    if pre_trained:
+        print("=> using pre-trained model '{}'".format(arch))
+        if arch.startswith("vgg") and arch.endswith("bn"):
+            model = models.__dict__[arch]()
+            model.load_state_dict(model_zoo.load_url(model_urls[arch]))
+        else:
+            model = models.__dict__[arch](pretrained=pre_trained)
+    else:
+        print("=> creating model '{}'".format(arch))
+        model = models.__dict__[arch]()
 
-    model_ft.name = 'res50'
-    model_ft.batch_size = 24
-    return model_ft
+    if fine_tune:
+        for param in model.parameters():
+            param.requires_grad = False
 
+    if arch.startswith('resnet') or arch.startswith("inception"):
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Sequential(nn.Linear(num_ftrs, settings.output_num), nn.Sigmoid())
+    elif arch.startswith("desnet"):
+        num_ftrs = model.classifier.in_features
+        model.classifier = nn.Sequential(nn.Linear(num_ftrs, settings.output_num), nn.Sigmoid())
+    elif arch.startswith('vgg'):
+        model.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, settings.output_num),
+            nn.Sigmoid())
 
-def create_res50_finetune(load_weights=False):
-    model_ft = models.resnet50(pretrained=True)
-    for param in model_ft.parameters():
-        param.requires_grad = False
+    if arch.startswith("inception_v3"):
+        model.aux_logits = False
 
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    model_ft = model_ft.cuda()
+    model = model.cuda()
 
-    model_ft.name = 'res50'
-    model_ft.batch_size = 36
-    return model_ft
+    model.batch_size = settings.BATCH_SIZES[arch]
+    if fine_tune:
+        if arch.startswith('vgg'):
+            model.batch_size = 48
+        else:
+            model.batch_size = 64
+    model.name = arch
 
-
-def create_res101(load_weights=False):
-    model_ft = models.resnet101(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    model_ft = model_ft.cuda()
-
-    model_ft.name = 'res101'
-    model_ft.batch_size = 16
-    return model_ft
-
-
-def create_res152(load_weights=False):
-    res152 = models.resnet152(pretrained=True)
-    num_ftrs = res152.fc.in_features
-    res152.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    res152 = res152.cuda()
-
-    res152.name = 'res152'
-    return res152
-
-
-def create_dense161(load_weights=False):
-    desnet_ft = models.densenet161(pretrained=True)
-    num_ftrs = desnet_ft.classifier.in_features
-    desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    desnet_ft = desnet_ft.cuda()
-
-    desnet_ft.name = 'dense161'
-    desnet_ft.batch_size = 16
-    return desnet_ft
-
-
-def create_dense169(load_weights=False):
-    desnet_ft = models.densenet169(pretrained=True)
-    num_ftrs = desnet_ft.classifier.in_features
-    desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    desnet_ft = desnet_ft.cuda()
-
-    desnet_ft.name = 'dense169'
-    desnet_ft.batch_size = 16
-    return desnet_ft
-
-
-def create_dense121(load_weights=False):
-    desnet_ft = models.densenet121(pretrained=True)
-    num_ftrs = desnet_ft.classifier.in_features
-    desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    desnet_ft = desnet_ft.cuda()
-
-    desnet_ft.name = 'dense121'
-    desnet_ft.batch_size = 16
-    return desnet_ft
-
-
-def create_dense201(load_weights=False):
-    desnet_ft = models.densenet201(pretrained=True)
-    num_ftrs = desnet_ft.classifier.in_features
-    desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    desnet_ft = desnet_ft.cuda()
-
-    desnet_ft.name = 'dense201'
-    desnet_ft.batch_size = 16
-    return desnet_ft
-
-
-def create_vgg19bn(load_weights=False):
-    vgg19_bn_ft = vgg19_bn(pretrained=True)
-    # vgg19_bn_ft.classifier = nn.Linear(25088, 3)
-    vgg19_bn_ft.classifier = nn.Sequential(
-        nn.Linear(512 * 7 * 7, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-        nn.Linear(4096, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-        nn.Linear(4096, 1),
-        nn.Sigmoid())
-
-    vgg19_bn_ft = vgg19_bn_ft.cuda()
-
-    vgg19_bn_ft.name = 'vgg19bn'
-    vgg19_bn_ft.max_num = 1
-    vgg19_bn_ft.batch_size = 16
-    return vgg19_bn_ft
-
-
-def create_vgg16bn(load_weights=False):
-    vgg16_bn_ft = vgg16_bn(pretrained=True)
-    # vgg16_bn_ft.classifier = nn.Linear(25088, 3)
-    vgg16_bn_ft.classifier = nn.Sequential(
-        nn.Linear(512 * 7 * 7, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-        nn.Linear(4096, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-        nn.Linear(4096, 1),
-        nn.Sigmoid())
-
-    vgg16_bn_ft = vgg16_bn_ft.cuda()
-
-    vgg16_bn_ft.name = 'vgg16bn'
-    vgg16_bn_ft.max_num = 1
-    vgg16_bn_ft.batch_size = 16
-    return vgg16_bn_ft
-
-
-def create_inceptionv3(load_weights=False):
-    incept_ft = inception_v3(pretrained=True)
-    num_ftrs = incept_ft.fc.in_features
-    incept_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    incept_ft.aux_logits = False
-    incept_ft = incept_ft.cuda()
-
-    incept_ft.name = 'inceptionv3'
-    incept_ft.batch_size = 32
-    return incept_ft
-
-
-def create_inceptionresv2(load_weights=False):
-    model_ft = inceptionresnetv2(pretrained=True)
-    num_ftrs = model_ft.classif.in_features
-    model_ft.classif = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
-    model_ft = model_ft.cuda()
-
-    model_ft.name = 'inceptionresv2'
-    model_ft.batch_size = 4
-    return model_ft
-
-
-def create_model(model_name):
-    create_func = 'create_' + model_name
-
-    return eval(create_func)()
+    return model

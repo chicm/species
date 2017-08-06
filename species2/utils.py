@@ -20,6 +20,7 @@ model_urls = {
     'vgg19_bn': 'https://download.pytorch.org/models/vgg19_bn-c79401a0.pth',
 }
 
+
 def get_acc_from_w_filename(filename):
     try:
         stracc = filename.split('_')[-2]
@@ -105,7 +106,7 @@ def create_model(arch, fine_tune=False, pre_trained=True):
     if arch.startswith('resnet') or arch.startswith("inception"):
         num_ftrs = model.fc.in_features
         model.fc = nn.Sequential(nn.Linear(num_ftrs, settings.output_num), nn.Sigmoid())
-    elif arch.startswith("desnet"):
+    elif arch.startswith("densenet"):
         num_ftrs = model.classifier.in_features
         model.classifier = nn.Sequential(nn.Linear(num_ftrs, settings.output_num), nn.Sigmoid())
     elif arch.startswith('vgg'):
@@ -127,9 +128,9 @@ def create_model(arch, fine_tune=False, pre_trained=True):
     model.batch_size = settings.BATCH_SIZES[arch]
     if fine_tune:
         if arch.startswith('vgg'):
-            model.batch_size = 48
+            model.batch_size = 56
         else:
-            model.batch_size = 64
+            model.batch_size = 128
     model.name = arch
 
     return model

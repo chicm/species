@@ -1,6 +1,7 @@
 import os
+from os import path
 
-DATA_DIR = 'C:\\Users\\caitsithx\\dl_data\\invasive-species-monitoring'
+DATA_DIR = path.expanduser('~') + os.sep + 'dl_data' + os.sep + 'invasive-species-monitoring'
 TRAIN_DIR = DATA_DIR + os.sep + 'train'
 TEST_DIR = DATA_DIR + os.sep + 'test'
 VALID_DIR = DATA_DIR + os.sep + 'valid'

@@ -317,23 +317,6 @@ def get_test_loader(model, batch_size=16, shuffle=False):
     return dloader
 
 
-def get_train_loader(model, batch_size=16, shuffle=True):
-    if model.name.startswith('inception'):
-        transkey = 'trainv3'
-    else:
-        transkey = 'train'
-    if hasattr(model, 'batch_size'):
-        batch_size = model.batch_size
-    print("train batch_size %d " % batch_size)
-    data_set = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
-                              settings.DATA_DIR + os.sep + 'sub01.csv',
-                              transform=data_transforms[transkey])
-    dloader = torch.utils.data.DataLoader(data_set, batch_size=batch_size,
-                                          shuffle=shuffle)
-    dloader.num = data_set.num
-    return dloader
-
-
 if __name__ == '__main__':
     dset = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
                           settings.DATA_DIR + os.sep + 'sub01.csv')

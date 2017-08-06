@@ -18,12 +18,69 @@ def pil_load(img_path):
             return img.convert('RGB')
 
 
-class PlanetDataset(data.Dataset):
+class ImageData:
+    def __init__(self, path, image_label):
+        self.path = path
+        self.label = image_label
+        self.image = None
+
+
+class PseudoLabelSet(data.Dataset):
+    def __getitem__(self, index):
+        image_data = self.data_set[index]
+        image = self.transform(image_data.image)
+        return image, image_data.label, image_data.path
+
+    def __len__(self):
+        return len(self.data_set)
+
+    def __init__(self, train_csv_path, pseudo_csv_path,
+                 transform=None):
+        df_train = pd.read_csv(train_csv_path)
+        df_pseudo = pd.read_csv(pseudo_csv_path)
+
+        self.data_set = []
+
+        for index in range(4):
+            self.add_data(df_train.values[:int(df_train.values.shape[0] * 0.7)], settings.TRAIN_DIR)
+
+        print("add %d train data." % len(self.data_set))
+
+        self.add_data(df_pseudo.values, settings.TEST_DIR, label_threshold=0.7)
+
+        print("add %d pseudo labeling data." % len(df_pseudo.values))
+
+        np.random.permutation(self.data_set)
+
+        print("pre-reading images from files.")
+        for image_data in tqdm.tqdm(self.data_set):
+            image_data.image = pil_load(image_data.path)
+
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = transforms.Lambda(lambda x: nothing(x))
+
+    def add_data(self, df_values, dir_path, label_threshold=None):
+        for line in df_values:
+            image_name, invasive = line
+            image_path = os.path.join(dir_path, str(int(image_name)) + '.jpg')
+
+            if label_threshold is not None:
+                if invasive >= label_threshold:
+                    label = 1.0
+                else:
+                    label = 0
+            else:
+                label = invasive
+            self.data_set.append(ImageData(image_path, np.float32(label)))
+
+
+class NormalSet(data.Dataset):
     def __init__(self, file_list_path, train_data=True, has_label=True,
                  transform=None, split=0.8):
         df_train = pd.read_csv(file_list_path)
         df_value = df_train.values
-        df_value = np.random.permutation(df_value)
         if has_label:
             split_index = int(df_value.shape[0] * split)
             if train_data:
@@ -38,6 +95,7 @@ class PlanetDataset(data.Dataset):
                 f, invasive = line
                 file_names[index] = os.path.join(settings.TRAIN_DIR, str(f) + '.jpg')
                 labels[index] = invasive
+            self.labels = np.array(labels, dtype=np.float32)
         else:
             file_names = [None] * df_train.values.shape[0]
             for index, line in enumerate(df_train.values):
@@ -57,11 +115,6 @@ class PlanetDataset(data.Dataset):
             self.images.append(pil_load(file_name))
 
         print("load %d images." % len(self.images))
-        if has_label:
-            self.labels = np.array(labels, dtype=np.float32)
-            # print(self.labels.shape)
-
-            # print(self.num)
 
     def __getitem__(self, index):
         # img = pil_load(self.file_names[index])
@@ -76,6 +129,21 @@ class PlanetDataset(data.Dataset):
 
     def __len__(self):
         return self.num
+
+
+class CopySet(NormalSet):
+    def __init__(self, data_set, transform):
+        self.transform = transform
+        self.num = data_set.num
+        self.file_names = data_set.file_names
+        self.train_data = data_set.train_data
+        self.has_label = data_set.has_label
+
+        self.images = data_set.images
+
+
+def nothing(image):
+    return image
 
 
 def randomRotate(img):
@@ -165,15 +233,15 @@ def get_train_loader(model, batch_size=16, shuffle=True):
         batch_size = model.batch_size
     # train_v2.csv
     print("train batch_size %d " % batch_size)
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv',
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'train_labels.csv',
+                     transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
     return dloader
 
 
-def get_val_loader(model, batch_size=16, shuffle=True):
+def get_val_loader(model, batch_size=16, split=0.8, shuffle=True):
     if model.name.startswith('inception'):
         transkey = 'validv3'
     else:
@@ -182,8 +250,51 @@ def get_val_loader(model, batch_size=16, shuffle=True):
         batch_size = model.batch_size
     # train_v2.csv
 
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'train_labels.csv', train_data=False,
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'train_labels.csv', train_data=False,
+                     transform=data_transforms[transkey], split=split)
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
+                                          shuffle=shuffle)
+    dloader.num = dset.num
+    return dloader
+
+
+def get_test_set():
+    return NormalSet(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False)
+
+
+def get_pseudo_set(pseudo_label_file):
+    return PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
+                          settings.DATA_DIR + os.sep + pseudo_label_file)
+
+
+def get_pseudo_train_loader(model, pseudo_label_file, batch_size=16, shuffle=True):
+    if model.name.startswith('inception'):
+        transkey = 'trainv3'
+    else:
+        transkey = 'train'
+    if hasattr(model, 'batch_size'):
+        batch_size = model.batch_size
+
+    print("train batch_size %d " % batch_size)
+    dset = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
+                          settings.RESULT_DIR + os.sep + pseudo_label_file,
+                          transform=data_transforms[transkey])
+
+    dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
+                                          shuffle=shuffle)
+    dloader.num = len(dset)
+    return dloader
+
+
+def copy_test_loader(model, data_set, shuffle=False):
+    if model.name.startswith('inception'):
+        transkey = 'testv3'
+    else:
+        transkey = 'test'
+    if hasattr(model, 'batch_size'):
+        batch_size = model.batch_size
+
+    dset = CopySet(data_set, transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
@@ -198,36 +309,32 @@ def get_test_loader(model, batch_size=16, shuffle=False):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
 
-    dset = PlanetDataset(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False,
-                         transform=data_transforms[transkey])
+    dset = NormalSet(settings.DATA_DIR + os.sep + 'sample_submission.csv', has_label=False,
+                     transform=data_transforms[transkey])
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size,
                                           shuffle=shuffle)
     dloader.num = dset.num
     return dloader
 
 
+def get_train_loader(model, batch_size=16, shuffle=True):
+    if model.name.startswith('inception'):
+        transkey = 'trainv3'
+    else:
+        transkey = 'train'
+    if hasattr(model, 'batch_size'):
+        batch_size = model.batch_size
+    print("train batch_size %d " % batch_size)
+    data_set = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
+                              settings.DATA_DIR + os.sep + 'sub01.csv',
+                              transform=data_transforms[transkey])
+    dloader = torch.utils.data.DataLoader(data_set, batch_size=batch_size,
+                                          shuffle=shuffle)
+    dloader.num = data_set.num
+    return dloader
+
+
 if __name__ == '__main__':
-    loader = get_train_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, label, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
-    loader = get_val_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, label, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
-    loader = get_test_loader()
-    print(loader.num)
-    for i, data in enumerate(loader):
-        img, fn = data
-        # print(fn)
-        # print(label)
-        if i > 10:
-            break
+    dset = PseudoLabelSet(settings.DATA_DIR + os.sep + 'sample_submission.csv',
+                          settings.DATA_DIR + os.sep + 'sub01.csv')
+    len(dset)

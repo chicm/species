@@ -2,6 +2,8 @@ import argparse
 import glob
 import os
 
+import time
+import tqdm
 import numpy as np
 import pandas as pd
 import torch
@@ -9,28 +11,24 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 import settings
-from cscreendataset import get_test_loader
+import data_loader
 from utils import create_model
 from utils import save_array, load_array
 
-data_dir = settings.DATA_DIR
-MODEL_DIR = settings.MODEL_DIR
-
-RESULT_DIR = data_dir + '/result'
-PRED_FILE = RESULT_DIR + '/pred_ens.dat'
-PRED_FILE_RAW = RESULT_DIR + '/pred_ens_raw.dat'
+PRED_FILE = settings.RESULT_DIR + os.sep + 'pred_ens.dat'
+PRED_FILE_RAW = settings.RESULT_DIR + os.sep + 'pred_ens_raw.dat'
 batch_size = 16
 
 w_file_matcher = ['dense161*pth', 'dense201*pth', 'dense169*pth', 'dense121*pth', 'inceptionv3*pth',
                   'res50*pth', 'res101*pth', 'res152*pth', 'vgg16*pth', 'vgg19*pth']
 
 
-def make_preds(net):
-    loader = get_test_loader(net)
+def make_preds(net, test_set):
+    loader = data_loader.copy_test_loader(net, test_set)
     preds = []
     m = nn.Softmax()
     net.eval()
-    for i, (img, _) in enumerate(loader, 0):
+    for (img, _) in tqdm.tqdm(loader):
         inputs = Variable(img.cuda())
         outputs = net(inputs)
         # pred = m(outputs).data.cpu().tolist()
@@ -43,20 +41,35 @@ def make_preds(net):
 def ensemble():
     preds_raw = []
 
-    for match_str in w_file_matcher:
-        # print(match_str)
-        os.chdir(MODEL_DIR)
-        w_files = glob.glob(match_str)
-        # print('cur:' + os.getcwd())
-        for w_file in w_files:
-            full_w_file = MODEL_DIR + '/' + w_file
-            mname = w_file.split('_')[0]
+    w_files = glob.glob(settings.MODEL_DIR + os.sep + "*.pth")
+    weights = {}
+    for w_file in w_files:
+        w_file = w_file.split(os.sep)[-1]
+        acc = float(w_file.split('_')[-2])
+        model_name = w_file.split('_')[0]
+        if w_file.split('_')[1] == 'bn':
+            model_name += '_bn'
+        if w_file.split('_')[1] == 'v3':
+            model_name += '_v3'
+
+        if model_name in weights:
+            weights[model_name].append(w_file)
+            # existing_weight_file = weights[model_name]
+            # existing_acc = float(existing_weight_file.split('_')[-2])
+            # if acc > existing_acc:
+            #     weights[model_name] = w_file
+        else:
+            weights[model_name] = [w_file]
+
+    test_set = data_loader.get_test_set()
+    for model_name, weight_files in weights.items():
+        for weight_file in weight_files:
+            full_w_file = settings.MODEL_DIR + os.sep + weight_file
             print(full_w_file)
-            model = create_model(mname)
+            model = create_model(model_name, pre_trained=False)
             model.load_state_dict(torch.load(full_w_file))
 
-            pred = make_preds(model)
-            pred = np.array(pred)
+            pred = np.array(make_preds(model, test_set))
             # print(pred[:100])
             preds_raw.append(pred)
             del model
@@ -71,20 +84,21 @@ def submit(filename):
     # filenames = get_stage1_test_loader('res50').filenames
     preds = load_array(PRED_FILE)
     print(preds[:100])
-    subm_name = RESULT_DIR + '/' + filename
-    df = pd.read_csv(data_dir + '/sample_submission.csv')
+    subm_name = settings.RESULT_DIR + os.sep + filename
+    df = pd.read_csv(settings.DATA_DIR + os.sep + 'sample_submission.csv')
     df['invasive'] = preds
     print(df.head())
     df.to_csv(subm_name, index=False)
 
     preds2 = (preds > 0.5).astype(np.int)
-    df2 = pd.read_csv(data_dir + '/sample_submission.csv') 
+    df2 = pd.read_csv(settings.DATA_DIR + os.sep + 'sample_submission.csv')
     df2['invasive'] = preds2
     df2.to_csv(subm_name + '01', index=False)
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--ens", action='store_true', help="ensemble predict")
-parser.add_argument("--sub", nargs=1, help="generate submission file")
+parser.add_argument("--sub", action='store_true', help="generate submission file")
 
 args = parser.parse_args()
 if args.ens:
@@ -92,6 +106,7 @@ if args.ens:
     print('done')
 if args.sub:
     print('generating submision file...')
-    submit(args.sub[0])
+    file_name = "submit-" + time.strftime("%Y%m%d-%H%M%S", time.gmtime()) + ".csv"
+    submit(file_name)
     print('done')
-    print('Please find submisson file at: {}'.format(RESULT_DIR + '/' + args.sub[0]))
+    print('Please find submisson file at: {}'.format(settings.RESULT_DIR + os.sep + file_name))

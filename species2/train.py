@@ -169,11 +169,11 @@ args = parser.parse_args()
 if args.train:
     print('start training model')
     mname = args.train[0]
-    train_net(mname, False)
+    train_net(mname, False, False, None)
 if args.fine_tune:
     print('start fine tune model')
     mname = args.fine_tune[0]
-    train_net(mname, True)
+    train_net(mname, True, False, None)
 if args.pseudo:
     print('start training with pseudo labeling')
     mname = args.pseudo[0]

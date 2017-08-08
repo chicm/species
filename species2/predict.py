@@ -19,12 +19,12 @@ import random
 from PIL import Image
 from utils import save_array, load_array, get_acc_from_w_filename
 from utils import create_model
-from cscreendataset import get_test_loader
+from cscreendataset import get_tta_loader
 
 data_dir = settings.DATA_DIR
 MODEL_DIR = settings.MODEL_DIR
 
-RESULT_DIR = data_dir + '/results'
+RESULT_DIR = data_dir + '/results_tta'
 PRED_FILE = RESULT_DIR + '/pred_ens.dat'
 PRED_FILE_RAW = RESULT_DIR + '/pred_ens_raw.dat'
 batch_size = 16
@@ -33,7 +33,7 @@ w_file_matcher = ['dense161*pth', 'dense201*pth','dense169*pth','dense121*pth','
     'res50*pth','res101*pth', 'res152*pth', 'vgg16*pth', 'vgg19*pth']
 
 def make_preds(net):
-    loader = get_test_loader(net)
+    loader = get_tta_loader(net)
     preds = []
     m = nn.Softmax()
     net.eval()
@@ -45,6 +45,13 @@ def make_preds(net):
         for p in pred:
             preds.append(p)
     return preds
+
+def tta_preds(net, num):
+    all_preds = [None] * num
+    for i in range(num):
+        all_preds[i] = np.array(make_preds(net))
+    return np.mean(all_preds, axis=0)
+
 def ensemble():
     preds_raw = []
     
@@ -60,8 +67,8 @@ def ensemble():
             model = create_model(mname)
             model.load_state_dict(torch.load(full_w_file))
 
-            pred = make_preds(model)
-            pred = np.array(pred)
+            pred = tta_preds(model, 10)
+            #pred = np.array(pred)
             #print(pred[:100])
             preds_raw.append(pred)
             del model    
@@ -81,10 +88,10 @@ def submit(filename):
     print(df.head())
     df.to_csv(subm_name, index=False)
 
-    preds2 = (preds > 0.5).astype(np.int)
-    df2 = pd.read_csv(data_dir + '/sample_submission.csv') 
-    df2['invasive'] = preds2
-    df2.to_csv(subm_name + '01', index=False)
+    #preds2 = (preds > 0.5).astype(np.int)
+    #df2 = pd.read_csv(data_dir + '/sample_submission.csv') 
+    #df2['invasive'] = preds2
+    #df2.to_csv(subm_name + '01', index=False)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ens", action='store_true', help="ensemble predict")

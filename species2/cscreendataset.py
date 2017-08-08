@@ -173,6 +173,19 @@ def get_test_loader(model, batch_size = 16, shuffle = False):
     dloader.num = dset.num
     return dloader
 
+def get_tta_loader(model, batch_size = 16, shuffle = False):
+    if model.name.startswith('inception'):
+        transkey = 'trainv3'
+    else:
+        transkey = 'train'
+    if hasattr(model, 'batch_size'):
+        batch_size = model.batch_size
+
+    dset = PlanetDataset(DATA_DIR+'/sample_submission.csv', has_label=False, transform=data_transforms[transkey])
+    dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
+    dloader.num = dset.num
+    return dloader
+
 if __name__ == '__main__':
     loader = get_train_loader()
     print(loader.num)

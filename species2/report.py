@@ -11,6 +11,7 @@ for header in headers:
 epoch = [0]
 file_name = ['']
 
+
 def report(report_line):
     for index in range(len(headers)):
         report_data[headers[index]].append(report_line[index])
@@ -19,7 +20,6 @@ def report(report_line):
     if epoch[0] % 10 == 0:
         df = pd.DataFrame(report_data, columns=headers)
         df.to_csv(settings.RESULT_DIR + os.sep + file_name[0])
-
 
 
 '''
@@ -64,4 +64,4 @@ def report_lr(lr):
 
 
 def start(since, name):
-    file_name[0] = name + '-' +str(since) + '.csv'
+    file_name[0] = name + '-' + str(since) + '.csv'

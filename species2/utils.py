@@ -8,6 +8,7 @@ import torch.utils.model_zoo as model_zoo
 from torchvision import models
 
 import settings
+import inspect
 
 MODEL_DIR = settings.MODEL_DIR
 
@@ -19,6 +20,13 @@ model_urls = {
     'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth',
     'vgg19_bn': 'https://download.pytorch.org/models/vgg19_bn-c79401a0.pth',
 }
+
+
+def is_debugging():
+    for frame in inspect.stack():
+        if frame[1].endswith("pydevd.py"):
+            return True
+    return False
 
 
 def get_acc_from_w_filename(filename):

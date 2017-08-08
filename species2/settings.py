@@ -24,7 +24,7 @@ BATCH_SIZES = {
     'densenet201': 12,
     'vgg19_bn': 16,
     'vgg16_bn': 16,
-    'inception_v3': 18,
+    'inception_v3': 16,
     'inceptionresnetv2': 8
 }
 

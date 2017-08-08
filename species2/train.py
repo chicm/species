@@ -11,17 +11,17 @@ import report
 import settings
 import data_loader
 from utils import create_model
-from utils import save_weights, load_best_weights, w_files_training
+from utils import save_weights, load_best_weights
 
 
 def train_model(model, criterion, optimizer, lr_schedule, max_num=2,
                 init_lr=0.001, num_epochs=100, data_loaders=None):
-
+    train_id = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
     since = time.time()
     best_model = model
     best_acc = 0.0
     print(model.name)
-    report.start(since, model.name)
+    report.start(train_id, model.name)
     for epoch in range(num_epochs):
         epoch_since = time.time()
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -38,13 +38,13 @@ def train_model(model, criterion, optimizer, lr_schedule, max_num=2,
                 inputs, labels, _ = data
                 inputs, labels = Variable(inputs.cuda()), Variable(
                     labels.cuda())
+                # print("input size: %s, %s" % (inputs.data.size()[0], inputs.data.size()[1]))
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 # preds = torch.sigmoid(outputs.data)
                 # print("preds size:{}".format(preds.size()))
                 # print("label size:{}".format(labels.data.size()))
-                preds = torch.ge(outputs.data, 0.5).view(labels.data.size())
-                # _, preds = torch.max(outputs.data, 1)
+                preds = torch.ge(outputs.data, 0.7).view(labels.data.size())
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
@@ -77,7 +77,6 @@ def train_model(model, criterion, optimizer, lr_schedule, max_num=2,
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
-    print(w_files_training)
     return best_model
 
 
@@ -134,11 +133,11 @@ def train(model, fine_tune, pseudo, pseudo_label_file):
     else:
         optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
 
-    max_num=2
+    max_num = 2
     if pseudo:
         data_loaders = {'train': data_loader.get_pseudo_train_loader(model, pseudo_label_file),
                         'valid': data_loader.get_val_loader(model, split=0.7)}
-        max_num +=2
+        max_num += 2
     else:
         data_loaders = {'train': data_loader.get_train_loader(model),
                         'valid': data_loader.get_val_loader(model)}

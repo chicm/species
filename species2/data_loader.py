@@ -9,6 +9,7 @@ import torch.utils.data as data
 from PIL import Image
 from torchvision import transforms
 
+import utils
 import settings
 
 
@@ -41,28 +42,30 @@ class PseudoLabelSet(data.Dataset):
 
         self.data_set = []
 
+        train_set = self.add_data(df_train.values[:int(df_train.values.shape[0] * 0.7)], settings.TRAIN_DIR)
         for index in range(4):
-            self.add_data(df_train.values[:int(df_train.values.shape[0] * 0.7)], settings.TRAIN_DIR)
+            self.data_set.extend(train_set)
 
         print("add %d train data." % len(self.data_set))
 
-        self.add_data(df_pseudo.values, settings.TEST_DIR, label_threshold=0.7)
+        pesudo_set = self.add_data(df_pseudo.values, settings.TEST_DIR, label_threshold=0.7)
+        self.data_set.extend(pesudo_set)
 
         print("add %d pseudo labeling data." % len(df_pseudo.values))
 
         np.random.permutation(self.data_set)
-
-        print("pre-reading images from files.")
-        for image_data in tqdm.tqdm(self.data_set):
-            image_data.image = pil_load(image_data.path)
 
         if transform:
             self.transform = transform
         else:
             self.transform = transforms.Lambda(lambda x: nothing(x))
 
-    def add_data(self, df_values, dir_path, label_threshold=None):
-        for line in df_values:
+    @staticmethod
+    def add_data(df_values, dir_path, label_threshold=None):
+        data_set = []
+
+        count = 0
+        for line in tqdm.tqdm(df_values):
             image_name, invasive = line
             image_path = os.path.join(dir_path, str(int(image_name)) + '.jpg')
 
@@ -73,7 +76,15 @@ class PseudoLabelSet(data.Dataset):
                     label = 0
             else:
                 label = invasive
-            self.data_set.append(ImageData(image_path, np.float32(label)))
+            image_data = ImageData(image_path, np.float32(label))
+            image_data.image = pil_load(image_data.path)
+            data_set.append(image_data)
+            count += 1
+            if utils.is_debugging() and count == 20:
+                print("break image pre-reads for debugging purpose.")
+                break
+
+        return data_set
 
 
 class NormalSet(data.Dataset):
@@ -195,7 +206,6 @@ data_transforms = {
         transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
         transforms.Scale(226),

@@ -83,8 +83,12 @@ def load_array(fname):
 def load_weights_file(model, w_file):
     model.load_state_dict(torch.load(w_file))
 
-def create_res50(load_weights=False):
+def create_res50(load_weights=False, freeze=False):
     model_ft = models.resnet50(pretrained=True)
+    if freeze:
+        for param in model_ft.parameters():
+            param.requires_grad = False
+
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     model_ft = model_ft.cuda()
@@ -93,8 +97,11 @@ def create_res50(load_weights=False):
     model_ft.batch_size = 32
     return model_ft
 
-def create_res101(load_weights=False):
+def create_res101(load_weights=False, freeze=False):
     model_ft = models.resnet101(pretrained=True)
+    if freeze:
+        for param in model_ft.parameters():
+            param.requires_grad = False
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     model_ft = model_ft.cuda()
@@ -103,8 +110,11 @@ def create_res101(load_weights=False):
     model_ft.batch_size = 32
     return model_ft
 
-def create_res152(load_weights=False):
+def create_res152(load_weights=False, freeze=False):
     res152 = models.resnet152(pretrained=True)
+    if freeze:
+        for param in res152.parameters():
+            param.requires_grad = False
     num_ftrs = res152.fc.in_features
     res152.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     res152 = res152.cuda()
@@ -112,8 +122,11 @@ def create_res152(load_weights=False):
     res152.name = 'res152'
     return res152
 
-def create_dense161(load_weights=False):
+def create_dense161(load_weights=False, freeze=False):
     desnet_ft = models.densenet161(pretrained=True)
+    if freeze:
+        for param in desnet_ft.parameters():
+            param.requires_grad = False
     num_ftrs = desnet_ft.classifier.in_features
     desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     desnet_ft = desnet_ft.cuda()
@@ -122,8 +135,11 @@ def create_dense161(load_weights=False):
     #desnet_ft.batch_size = 32
     return desnet_ft
 
-def create_dense169(load_weights=False):
+def create_dense169(load_weights=False, freeze=False):
     desnet_ft = models.densenet169(pretrained=True)
+    if freeze:
+        for param in desnet_ft.parameters():
+            param.requires_grad = False
     num_ftrs = desnet_ft.classifier.in_features
     desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     desnet_ft = desnet_ft.cuda()
@@ -132,8 +148,11 @@ def create_dense169(load_weights=False):
     #desnet_ft.batch_size = 32
     return desnet_ft
 
-def create_dense121(load_weights=False):
+def create_dense121(load_weights=False, freeze=False):
     desnet_ft = models.densenet121(pretrained=True)
+    if freeze:
+        for param in desnet_ft.parameters():
+            param.requires_grad = False
     num_ftrs = desnet_ft.classifier.in_features
     desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     desnet_ft = desnet_ft.cuda()
@@ -142,8 +161,11 @@ def create_dense121(load_weights=False):
     desnet_ft.batch_size = 32
     return desnet_ft
 
-def create_dense201(load_weights=False):
+def create_dense201(load_weights=False, freeze=False):
     desnet_ft = models.densenet201(pretrained=True)
+    if freeze:
+        for param in desnet_ft.parameters():
+            param.requires_grad = False
     num_ftrs = desnet_ft.classifier.in_features
     desnet_ft.classifier = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     desnet_ft = desnet_ft.cuda()
@@ -152,8 +174,11 @@ def create_dense201(load_weights=False):
     #desnet_ft.batch_size = 32
     return desnet_ft
 
-def create_vgg19bn(load_weights=False):
+def create_vgg19bn(load_weights=False, freeze=False):
     vgg19_bn_ft = vgg19_bn(pretrained=True)
+    if freeze:
+        for param in vgg19_bn_ft.parameters():
+            param.requires_grad = False
     #vgg19_bn_ft.classifier = nn.Linear(25088, 3)
     vgg19_bn_ft.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
@@ -172,8 +197,11 @@ def create_vgg19bn(load_weights=False):
     #vgg19_bn_ft.batch_size = 32
     return vgg19_bn_ft
 
-def create_vgg16bn(load_weights=False):
+def create_vgg16bn(load_weights=False, freeze=False):
     vgg16_bn_ft = vgg16_bn(pretrained=True)
+    if freeze:
+        for param in vgg16_bn_ft.parameters():
+            param.requires_grad = False
     #vgg16_bn_ft.classifier = nn.Linear(25088, 3)
     vgg16_bn_ft.classifier = nn.Sequential(
             nn.Linear(512 * 7 * 7, 4096),
@@ -192,8 +220,11 @@ def create_vgg16bn(load_weights=False):
     #vgg16_bn_ft.batch_size = 32
     return vgg16_bn_ft
 
-def create_inceptionv3(load_weights=False):
+def create_inceptionv3(load_weights=False, freeze=False):
     incept_ft = inception_v3(pretrained=True)
+    if freeze:
+        for param in incept_ft.parameters():
+            param.requires_grad = False
     num_ftrs = incept_ft.fc.in_features
     incept_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     incept_ft.aux_logits=False
@@ -203,17 +234,17 @@ def create_inceptionv3(load_weights=False):
     incept_ft.batch_size = 32
     return incept_ft
 
-def create_inceptionresv2(load_weights=False):
+def create_inceptionresv2(load_weights=False, freeze=False):
     model_ft = inceptionresnetv2(pretrained=True)
     num_ftrs = model_ft.classif.in_features
     model_ft.classif = nn.Sequential(nn.Linear(num_ftrs, 1), nn.Sigmoid())
     model_ft = model_ft.cuda()
 
     model_ft.name = 'inceptionresv2'
-    model_ft.batch_size = 4
+    model_ft.batch_size = 8
     return model_ft
 
-def create_model(model_name):
+def create_model(model_name, freeze=False):
     create_func = 'create_' + model_name
 
-    return eval(create_func)()
+    return eval(create_func)(freeze=freeze)

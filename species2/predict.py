@@ -47,6 +47,7 @@ def make_preds(net):
     return preds
 
 def tta_preds(net, num):
+    print('tta {} predict...'.format(num))
     all_preds = [None] * num
     for i in range(num):
         all_preds[i] = np.array(make_preds(net))
@@ -67,7 +68,7 @@ def ensemble():
             model = create_model(mname)
             model.load_state_dict(torch.load(full_w_file))
 
-            pred = tta_preds(model, 10)
+            pred = tta_preds(model, 15)
             #pred = np.array(pred)
             #print(pred[:100])
             preds_raw.append(pred)

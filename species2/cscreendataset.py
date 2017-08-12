@@ -19,7 +19,7 @@ def pil_load(img_path):
             return img.convert('RGB')
 
 class PlanetDataset(data.Dataset):
-    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, split=0.8):
+    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, split=0.85):
         df_train = pd.read_csv(file_list_path)
         dfvalue = df_train.values
         dfvalue = np.random.permutation(dfvalue)

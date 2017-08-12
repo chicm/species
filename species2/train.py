@@ -30,9 +30,9 @@ data_dir = settings.DATA_DIR
 RESULT_DIR = data_dir + '/results'
 MODEL_DIR = settings.MODEL_DIR
 batch_size = 16
-epochs = 50
+epochs = 70
 
-def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=100):
+def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=70):
     data_loaders = { 'train': get_train_loader(model), 'valid': get_val_loader(model)} 
     
     since = time.time()
@@ -113,18 +113,31 @@ def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
             param_group['lr'] = lr
     return optimizer    
 
-def train(model, init_lr = 0.001, num_epochs = epochs):
+def train(model, init_lr = 0.001, freeze=False, num_epochs = epochs):
     criterion = nn.BCELoss()
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
+    #optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
     #optimizer_ft = optim.Adam(model.parameters(), lr=init_lr)
+
+    if freeze:
+        print('training only classifier')
+        if hasattr(model, 'fc'):
+            optimizer_ft = optim.SGD(model.fc.parameters(), lr=0.01, momentum=0.9)
+        elif hasattr(model, 'classifier'):
+            optimizer_ft = optim.SGD(model.classifier.parameters(), lr=0.01, momentum=0.9)
+        else:
+            print('ERROR, no fc or classifier')
+            exit()
+    else:
+        print('training full net')
+        optimizer_ft = optim.SGD(model.parameters(), lr=init_lr, momentum=0.9)
 
     model = train_model(model, criterion, optimizer_ft, cyc_lr_scheduler, init_lr=init_lr, 
                         num_epochs=num_epochs, max_num = model.max_num)
     return model
 
 
-def train_net(model_name):
+def train_net(model_name, freeze=False, num_epochs=epochs):
     print('Training {}...'.format(model_name))
     model = create_model(model_name)
     try:
@@ -133,15 +146,20 @@ def train_net(model_name):
         print('Failed to load weigths')
     if not hasattr(model, 'max_num'):
         model.max_num = 2
-    train(model)
+    train(model, freeze=freeze, num_epochs=num_epochs)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--train", nargs=1, help="train model")
+parser.add_argument("--freeze", action='store_true', help="freeze conv layers")
 
 args = parser.parse_args()
 if args.train:
     print('start training model')
     mname = args.train[0]
-    train_net(mname)
+    #train_net(mname)
+    if args.freeze:
+        train_net(mname, freeze=True, num_epochs=5)
+    else:
+        train_net(mname, freeze=False, num_epochs=epochs)
 
     print('done')

@@ -94,7 +94,7 @@ def create_res50(load_weights=False, freeze=False):
     model_ft = model_ft.cuda()
 
     model_ft.name = 'res50'
-    model_ft.batch_size = 32
+    model_ft.batch_size = 8
     return model_ft
 
 def create_res101(load_weights=False, freeze=False):
@@ -107,7 +107,7 @@ def create_res101(load_weights=False, freeze=False):
     model_ft = model_ft.cuda()
 
     model_ft.name = 'res101'
-    model_ft.batch_size = 32
+    model_ft.batch_size = 8
     return model_ft
 
 def create_res152(load_weights=False, freeze=False):
@@ -158,7 +158,7 @@ def create_dense121(load_weights=False, freeze=False):
     desnet_ft = desnet_ft.cuda()
 
     desnet_ft.name = 'dense121'
-    desnet_ft.batch_size = 32
+    desnet_ft.batch_size = 8
     return desnet_ft
 
 def create_dense201(load_weights=False, freeze=False):
@@ -231,7 +231,7 @@ def create_inceptionv3(load_weights=False, freeze=False):
     incept_ft = incept_ft.cuda()
 
     incept_ft.name = 'inceptionv3'
-    incept_ft.batch_size = 32
+    incept_ft.batch_size = 8
     return incept_ft
 
 def create_inceptionresv2(load_weights=False, freeze=False):

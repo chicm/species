@@ -27,9 +27,9 @@ from cscreendataset import get_train_loader, get_val_loader
 
 data_dir = settings.DATA_DIR
 
-RESULT_DIR = data_dir + '/results'
+RESULT_DIR = data_dir + '/results_512'
 MODEL_DIR = settings.MODEL_DIR
-batch_size = 16
+#batch_size = 4
 epochs = 70
 
 def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=70):
@@ -51,10 +51,10 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
                 model.train(False)
             running_loss = 0.0
             running_corrects = 0
-            for data in data_loaders[phase]:
+            for i, data in enumerate(data_loaders[phase]):
                 inputs, labels, _ = data
                 inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-                optimizer.zero_grad()
+                #optimizer.zero_grad()
                 outputs = model(inputs)
                 #preds = torch.sigmoid(outputs.data)
                 preds = torch.ge(outputs.data, 0.5)
@@ -64,7 +64,11 @@ def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=
                 loss = criterion(outputs, labels)
                 if phase == 'train':
                     loss.backward()
-                    optimizer.step()
+                    if (i+1) % 8 == 0:
+                        optimizer.step()
+                        optimizer.zero_grad()
+                else:
+                    optimizer.zero_grad()
                 running_loss += loss.data[0]
                 running_corrects += torch.sum(preds.int() == labels.data.int())
             epoch_loss = running_loss / data_loaders[phase].num

@@ -19,7 +19,7 @@ def pil_load(img_path):
             return img.convert('RGB')
 
 class PlanetDataset(data.Dataset):
-    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, split=0.85):
+    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, split=0.8):
         df_train = pd.read_csv(file_list_path)
         dfvalue = df_train.values
         dfvalue = np.random.permutation(dfvalue)
@@ -77,8 +77,8 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        transforms.Scale(320), 
-        transforms.RandomSizedCrop(224),
+        #transforms.Scale(320), 
+        transforms.RandomSizedCrop(420),
         #transforms.Scale(224), 
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
@@ -87,8 +87,8 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        transforms.Scale(480), 
-        transforms.RandomSizedCrop(299),
+        #transforms.Scale(480), 
+        transforms.RandomSizedCrop(420),
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
@@ -96,27 +96,27 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
-        transforms.Scale(224),
-        #transforms.CenterCrop(224),
+        #transforms.Scale(224),
+        transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        transforms.Scale(299),
-        #transforms.CenterCrop(299),
+        #transforms.Scale(299),
+        transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
-        transforms.Scale(224),
-        #transforms.CenterCrop(224),
+        #transforms.Scale(224),
+        transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'testv3': transforms.Compose([
-        transforms.Scale(299),
-        #transforms.CenterCrop(299),
+        #transforms.Scale(299),
+        transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
@@ -134,7 +134,7 @@ dset_classes = dsets['train'].classes
 save_array(CLASSES_FILE, dset_classes)
 '''
 
-def get_train_loader(model, batch_size = 16, shuffle = True):
+def get_train_loader(model, batch_size = 4, shuffle = True):
     if model.name.startswith('inception'):
         transkey = 'trainv3'
     else:
@@ -147,7 +147,7 @@ def get_train_loader(model, batch_size = 16, shuffle = True):
     dloader.num = dset.num
     return dloader
 
-def get_val_loader(model, batch_size = 16, shuffle = True):
+def get_val_loader(model, batch_size = 4, shuffle = True):
     if model.name.startswith('inception'):
         transkey = 'validv3'
     else:
@@ -160,7 +160,7 @@ def get_val_loader(model, batch_size = 16, shuffle = True):
     dloader.num = dset.num
     return dloader
 
-def get_test_loader(model, batch_size = 16, shuffle = False):
+def get_test_loader(model, batch_size = 4, shuffle = False):
     if model.name.startswith('inception'):
         transkey = 'testv3'
     else:
@@ -173,7 +173,7 @@ def get_test_loader(model, batch_size = 16, shuffle = False):
     dloader.num = dset.num
     return dloader
 
-def get_tta_loader(model, batch_size = 16, shuffle = False):
+def get_tta_loader(model, batch_size = 4, shuffle = False):
     if model.name.startswith('inception'):
         transkey = 'trainv3'
     else:

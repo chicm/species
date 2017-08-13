@@ -88,46 +88,46 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        #transforms.Scale(500), 
-        transforms.RandomSizedCrop(420),
+        transforms.Scale(450), 
+        transforms.RandomSizedCrop(380),
         #transforms.Scale(224), 
         transforms.RandomHorizontalFlip(),
-        transforms.Lambda(lambda x: randomRotate(x)),
+        #transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        #transforms.Scale(500), 
-        transforms.RandomSizedCrop(420),
+        transforms.Scale(450), 
+        transforms.RandomSizedCrop(380),
         transforms.RandomHorizontalFlip(),
-        transforms.Lambda(lambda x: randomRotate(x)),
+        #transforms.Lambda(lambda x: randomRotate(x)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
-        #transforms.Scale(500),
-        transforms.CenterCrop(420),
+        transforms.Scale(450),
+        transforms.CenterCrop(380),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        #transforms.Scale(500),
-        transforms.CenterCrop(420),
+        transforms.Scale(450),
+        transforms.CenterCrop(380),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
-        #transforms.Scale(500),
-        transforms.CenterCrop(420),
+        transforms.Scale(450),
+        transforms.CenterCrop(380),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'testv3': transforms.Compose([
-        #transforms.Scale(500),
-        transforms.CenterCrop(420),
+        transforms.Scale(450),
+        transforms.CenterCrop(380),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])

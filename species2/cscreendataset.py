@@ -7,11 +7,20 @@ import torch
 import torch.utils.data as data
 from torchvision import datasets, models, transforms
 import random
+from sklearn.model_selection import KFold
 #import transforms
 
 DATA_DIR = settings.DATA_DIR
 TRAIN_DIR = DATA_DIR + '/train-640'
 TEST_DIR = DATA_DIR + '/test-640'
+
+df_train = pd.read_csv(DATA_DIR+'/train_labels.csv')
+kf = KFold(n_splits=5)
+train_index = []
+val_index = []
+for train_i, val_i in kf.split(df_train.values):
+    train_index.append(train_i)
+    val_index.append(val_i)
 
 def pil_load(img_path):
     with open(img_path, 'rb') as f:
@@ -19,16 +28,17 @@ def pil_load(img_path):
             return img.convert('RGB')
 
 class PlanetDataset(data.Dataset):
-    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, split=0.8):
-        df_train = pd.read_csv(file_list_path)
+    def __init__(self, file_list_path, train_data=True, has_label = True, transform=None, folder_index=0):
+        #df_train = pd.read_csv(file_list_path)
         dfvalue = df_train.values
-        dfvalue = np.random.permutation(dfvalue)
+        #dfvalue = np.random.permutation(dfvalue)
         if has_label:
-            split_index = (int)(dfvalue.shape[0] * split)
+            #split_index = (int)(dfvalue.shape[0] * split)
             if train_data:
-                split_data = dfvalue[:split_index]
+                split_data = dfvalue[train_index[folder_index]]
             else:
-                split_data = dfvalue[split_index:]
+                split_data = dfvalue[val_index[folder_index]]
+            split_data = np.random.permutation(split_data)
             #print(split_data.shape)
             filenames = [None] * split_data.shape[0]
             labels = [None] * split_data.shape[0]
@@ -38,8 +48,9 @@ class PlanetDataset(data.Dataset):
                 filenames[i] = os.path.join(TRAIN_DIR, str(f)+'.jpg')
                 labels[i] = invasive
         else:
-            filenames = [None] * df_train.values.shape[0]
-            for i, line in enumerate(df_train.values):
+            df_test = pd.read_csv(file_list_path)
+            filenames = [None] * df_test.values.shape[0]
+            for i, line in enumerate(df_test.values):
                 f, invasive = line
                 filenames[i] = TEST_DIR + '/' + str(int(f)) + '.jpg'            
             #print(filenames[:100])
@@ -77,7 +88,7 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        #transforms.Scale(320), 
+        #transforms.Scale(500), 
         transforms.RandomSizedCrop(420),
         #transforms.Scale(224), 
         transforms.RandomHorizontalFlip(),
@@ -87,7 +98,7 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        #transforms.Scale(480), 
+        #transforms.Scale(500), 
         transforms.RandomSizedCrop(420),
         transforms.RandomHorizontalFlip(),
         transforms.Lambda(lambda x: randomRotate(x)),
@@ -96,26 +107,26 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
-        #transforms.Scale(224),
+        #transforms.Scale(500),
         transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        #transforms.Scale(299),
+        #transforms.Scale(500),
         transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
-        #transforms.Scale(224),
+        #transforms.Scale(500),
         transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'testv3': transforms.Compose([
-        #transforms.Scale(299),
+        #transforms.Scale(500),
         transforms.CenterCrop(420),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -142,7 +153,7 @@ def get_train_loader(model, batch_size = 4, shuffle = True):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
     #train_v2.csv
-    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey])
+    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', transform=data_transforms[transkey], folder_index=model.folder_index)
     dloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader
@@ -155,7 +166,7 @@ def get_val_loader(model, batch_size = 4, shuffle = True):
     if hasattr(model, 'batch_size'):
         batch_size = model.batch_size
     #train_v2.csv
-    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', train_data=False, transform=data_transforms[transkey])
+    dset = PlanetDataset(DATA_DIR+'/train_labels.csv', train_data=False, transform=data_transforms[transkey], folder_index=model.folder_index)
     dloader = torch.utils.data.DataLoader(dset,  batch_size=batch_size, shuffle=shuffle, num_workers=4)
     dloader.num = dset.num
     return dloader

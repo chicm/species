@@ -95,6 +95,7 @@ def create_res50(load_weights=False, freeze=False):
 
     model_ft.name = 'res50'
     model_ft.batch_size = 32
+    model_ft.folder_index = 0
     return model_ft
 
 def create_res101(load_weights=False, freeze=False):
@@ -108,6 +109,7 @@ def create_res101(load_weights=False, freeze=False):
 
     model_ft.name = 'res101'
     model_ft.batch_size = 32
+    model_ft.folder_index = 1
     return model_ft
 
 def create_res152(load_weights=False, freeze=False):
@@ -120,6 +122,7 @@ def create_res152(load_weights=False, freeze=False):
     res152 = res152.cuda()
 
     res152.name = 'res152'
+    res152.folder_index = 2
     return res152
 
 def create_dense161(load_weights=False, freeze=False):
@@ -133,6 +136,7 @@ def create_dense161(load_weights=False, freeze=False):
 
     desnet_ft.name = 'dense161'
     #desnet_ft.batch_size = 32
+    desnet_ft.folder_index = 3
     return desnet_ft
 
 def create_dense169(load_weights=False, freeze=False):
@@ -146,6 +150,7 @@ def create_dense169(load_weights=False, freeze=False):
 
     desnet_ft.name = 'dense169'
     #desnet_ft.batch_size = 32
+    desnet_ft.folder_index = 4
     return desnet_ft
 
 def create_dense121(load_weights=False, freeze=False):
@@ -159,6 +164,7 @@ def create_dense121(load_weights=False, freeze=False):
 
     desnet_ft.name = 'dense121'
     desnet_ft.batch_size = 32
+    desnet_ft.folder_index = 0
     return desnet_ft
 
 def create_dense201(load_weights=False, freeze=False):
@@ -172,6 +178,7 @@ def create_dense201(load_weights=False, freeze=False):
  
     desnet_ft.name = 'dense201'
     #desnet_ft.batch_size = 32
+    desnet_ft.folder_index = 1
     return desnet_ft
 
 def create_vgg19bn(load_weights=False, freeze=False):
@@ -195,6 +202,7 @@ def create_vgg19bn(load_weights=False, freeze=False):
     vgg19_bn_ft.name = 'vgg19bn'
     vgg19_bn_ft.max_num = 1
     #vgg19_bn_ft.batch_size = 32
+    vgg19_bn_ft.folder_index = 2
     return vgg19_bn_ft
 
 def create_vgg16bn(load_weights=False, freeze=False):
@@ -218,6 +226,7 @@ def create_vgg16bn(load_weights=False, freeze=False):
     vgg16_bn_ft.name = 'vgg16bn'
     vgg16_bn_ft.max_num = 1
     #vgg16_bn_ft.batch_size = 32
+    vgg16_bn_ft.folder_index = 3
     return vgg16_bn_ft
 
 def create_inceptionv3(load_weights=False, freeze=False):
@@ -232,6 +241,7 @@ def create_inceptionv3(load_weights=False, freeze=False):
 
     incept_ft.name = 'inceptionv3'
     incept_ft.batch_size = 32
+    incept_ft.folder_index = 4
     return incept_ft
 
 def create_inceptionresv2(load_weights=False, freeze=False):

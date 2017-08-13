@@ -27,7 +27,6 @@ from cscreendataset import get_train_loader, get_val_loader
 
 data_dir = settings.DATA_DIR
 
-RESULT_DIR = data_dir + '/results'
 MODEL_DIR = settings.MODEL_DIR
 batch_size = 16
 epochs = 70

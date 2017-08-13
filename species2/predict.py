@@ -24,7 +24,7 @@ from cscreendataset import get_tta_loader
 data_dir = settings.DATA_DIR
 MODEL_DIR = settings.MODEL_DIR
 
-RESULT_DIR = data_dir + '/results_tta'
+RESULT_DIR = settings.RESULT_DIR
 PRED_FILE = RESULT_DIR + '/pred_ens.dat'
 PRED_FILE_RAW = RESULT_DIR + '/pred_ens_raw.dat'
 batch_size = 16

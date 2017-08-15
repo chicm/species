@@ -88,7 +88,7 @@ def randomRotate(img):
 
 data_transforms = {
     'train': transforms.Compose([
-        transforms.Scale(280), 
+        #transforms.Scale(320), 
         transforms.RandomSizedCrop(224),
         #transforms.Scale(224), 
         transforms.RandomHorizontalFlip(),
@@ -98,7 +98,7 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        transforms.Scale(420), 
+        #transforms.Scale(480), 
         transforms.RandomSizedCrop(299),
         transforms.RandomHorizontalFlip(),
         #transforms.Lambda(lambda x: randomRotate(x)),
@@ -107,26 +107,26 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'valid': transforms.Compose([
-        transforms.Scale(280),
+        transforms.Scale(320),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        transforms.Scale(420),
+        transforms.Scale(480),
         transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'test': transforms.Compose([
-        transforms.Scale(224),
+        #transforms.Scale(224),
         #transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'testv3': transforms.Compose([
-        transforms.Scale(299),
+        #transforms.Scale(299),
         #transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])

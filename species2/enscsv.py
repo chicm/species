@@ -3,9 +3,13 @@ import numpy as np
 
 #src_csv = '/home/chicm/ml/kgdata/species/results_tta/tta_25.csv'
 src_csvs = ['/home/chicm/ml/kgdata/species/results_tta/99484/tta15.csv', 
-            '/home/chicm/ml/kgdata/species/results_512/420_1.csv']
+            '/home/chicm/ml/kgdata/species/results_512/420_1.csv',
+	    '/home/chicm/ml/kgdata/species/results_512_2/420_2.csv',
+	    '/home/chicm/ml/kgdata/species/results_224/224.csv',
+	    '/home/chicm/ml/kgdata/species/results_380/size_380.csv',
+            '/home/chicm/ml/kgdata/species/results_224_2/224_2.csv']
 #tgt_csv = '/home/chicm/ml/kgdata/species/results_tta/tta_25_bin.csv'
-tgt_csv = '/home/chicm/ml/kgdata/species/ensemble/ensemble1.csv'
+tgt_csv = '/home/chicm/ml/kgdata/species/ensemble/ensemble5.csv'
 
 dfvalue = []
 

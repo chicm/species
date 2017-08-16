@@ -81,15 +81,20 @@ class PlanetDataset(data.Dataset):
         return self.num
 
 def randomRotate(img):
-    d = random.randint(0,4) * 90
+    #d = random.randint(0,4) * 90
+    d = random.uniform(0, 360)
     img2 = img.rotate(d, resample=Image.NEAREST)
     return img2
 
+def random_uniform_rotate(img):
+    d = random.uniform(0, 360)
+    img2 = img.rotate(d, resample=Image.NEAREST)
+    return img2
 
 data_transforms = {
     'train': transforms.Compose([
-        #transforms.Scale(320), 
-        transforms.RandomSizedCrop(224),
+        transforms.Scale(320), 
+        transforms.RandomSizedCrop(256),
         #transforms.Scale(224), 
         transforms.RandomHorizontalFlip(),
         #transforms.Lambda(lambda x: randomRotate(x)),
@@ -98,7 +103,7 @@ data_transforms = {
         #transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ]),
     'trainv3': transforms.Compose([
-        #transforms.Scale(480), 
+        transforms.Scale(380), 
         transforms.RandomSizedCrop(299),
         transforms.RandomHorizontalFlip(),
         #transforms.Lambda(lambda x: randomRotate(x)),
@@ -108,12 +113,12 @@ data_transforms = {
     ]),
     'valid': transforms.Compose([
         transforms.Scale(320),
-        transforms.CenterCrop(224),
+        transforms.CenterCrop(256),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'validv3': transforms.Compose([
-        transforms.Scale(480),
+        transforms.Scale(380),
         transforms.CenterCrop(299),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])

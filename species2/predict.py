@@ -29,8 +29,8 @@ PRED_FILE = RESULT_DIR + '/pred_ens.dat'
 PRED_FILE_RAW = RESULT_DIR + '/pred_ens_raw.dat'
 batch_size = 16
 
-w_file_matcher = ['dense161*pth', 'dense201*pth','dense169*pth','dense121*pth','inceptionv3*pth',
-    'res50*pth','res101*pth', 'res152*pth', 'vgg16*pth', 'vgg19*pth']
+w_file_matcher = ['dense121*pth','inceptionv3*pth',
+    'res50*pth','res101*pth', 'res152*pth', 'vgg16*pth', 'vgg19*pth','dense161*pth', 'dense201*pth','dense169*pth']
 
 def make_preds(net):
     loader = get_tta_loader(net)

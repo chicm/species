@@ -29,7 +29,7 @@ data_dir = settings.DATA_DIR
 
 MODEL_DIR = settings.MODEL_DIR
 batch_size = 16
-epochs = 70
+epochs = 20
 
 def train_model(model, criterion, optimizer, lr_scheduler, max_num = 2, init_lr=0.001, num_epochs=70):
     data_loaders = { 'train': get_train_loader(model), 'valid': get_val_loader(model)} 
@@ -98,7 +98,7 @@ def lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=7):
         param_group['lr'] = lr
     return optimizer  
 
-def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=6):
+def cyc_lr_scheduler(optimizer, epoch, init_lr=0.001, lr_decay_epoch=3):
     lr = 0
     for param_group in optimizer.param_groups:
         lr = param_group['lr']
